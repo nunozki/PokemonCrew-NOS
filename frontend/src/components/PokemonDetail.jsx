@@ -22,7 +22,7 @@ export default function PokemonDetail({ name, onClose }) {
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center text-white">
-        A carregar {name}...
+        Loading {name}...
       </div>
     );
   }
@@ -43,11 +43,11 @@ export default function PokemonDetail({ name, onClose }) {
         <h2 className="text-3xl font-bold text-center capitalize">{data.name}</h2>
 
         <div className="mt-4 space-y-2">
-          <p><strong>Tipos:</strong> {data.types.join(", ")}</p>
-          <p><strong>Peso:</strong> {data.weight}</p>
-          <p><strong>Altura:</strong> {data.height}</p>
+          <p><strong>Types:</strong> {data.types.join(", ")}</p>
+          <p><strong>Weight:</strong> {data.weight}</p>
+          <p><strong>Height:</strong> {data.height}</p>
 
-          <h3 className="mt-3 font-semibold">Estatísticas:</h3>
+          <h3 className="mt-3 font-semibold">Statistics:</h3>
           <ul className="grid grid-cols-2 gap-x-4">
             {Object.entries(data.stats).map(([key, value]) => (
               <li key={key} className="capitalize">

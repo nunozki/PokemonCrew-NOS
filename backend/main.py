@@ -1,6 +1,10 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException
+from backend import models, schemas, database
+from backend.routes import team
 import httpx
+
+models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="MyPokemonCrew API")
 
@@ -14,6 +18,8 @@ app.add_middleware(
     allow_methods=["*"],  # GET, POST, etc.
     allow_headers=["*"],
 )
+
+app.include_router(team.router, prefix="/api/team", tags=["Team"])
 
 @app.get("/api/pokemon/")
 async def list_pokemons(limit: int = 20, offset: int = 0):

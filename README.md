@@ -2,7 +2,7 @@
 
 cd backend
 venv\Scripts\activate
-uvicorn main:app --reload --port 9000
+uvicorn backend.main:app --reload --port 9000 (Return to root folder of the project/repo)
 http://localhost:9000/docs
 
 cd frontend

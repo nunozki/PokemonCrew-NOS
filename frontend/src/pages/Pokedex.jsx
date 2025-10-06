@@ -35,15 +35,15 @@ export default function Pokedex() {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Pesquisar Pokémon..."
+          placeholder="Searching Pokemon..."
           className="border p-2 rounded-l w-60"
         />
-        <button type="submit" className="bg-blue-500 text-white px-4 rounded-r">Buscar</button>
+        <button type="submit" className="bg-blue-500 text-white px-4 rounded-r">Search</button>
       </form>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {pokemons.map((p) => (
-          <PokemonCard key={p.name} pokemon={p} onClick={setSelected} />
+          <PokemonCard key={p.name} pokemon={p} onClick={() => setSelected(p.name)} />
         ))}
       </div>
 
