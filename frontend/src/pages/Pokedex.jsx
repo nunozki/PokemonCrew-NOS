@@ -20,7 +20,7 @@ export default function Pokedex() {
     if (!search) return loadPokemons();
     try {
       const res = await api.get(`/pokemon/${search.toLowerCase()}`);
-      setPokemons([res.data]);
+      setPokemons([{ name: res.data.name, image: res.data.image }]);
     } catch {
       alert("Pokemon not found!");
     }
@@ -35,7 +35,7 @@ export default function Pokedex() {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Searching Pokemon..."
+          placeholder="Pesquisar Pokémon..."
           className="border p-2 rounded-l w-60"
         />
         <button type="submit" className="bg-blue-500 text-white px-4 rounded-r">Buscar</button>
@@ -49,7 +49,7 @@ export default function Pokedex() {
 
       {selected && (
         <PokemonDetail
-          data={pokemons.find((p) => p.name.toLowerCase() === selected.toLowerCase()) || {}}
+          name={selected}
           onClose={() => setSelected(null)}
         />
       )}

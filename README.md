@@ -1,5 +1,6 @@
 # PokemonCrew-NOS
 
+cd backend
 venv\Scripts\activate
 uvicorn main:app --reload --port 9000
 http://localhost:9000/docs
