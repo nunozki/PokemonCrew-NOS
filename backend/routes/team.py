@@ -21,15 +21,11 @@ def get_team(db: Session = Depends(get_db)):
         db.refresh(team)
     return team
 
-@router.post("/add", response_model=schemas.Team)
-def add_pokemon(pokemon: schemas.PokemonCreate, db: Session = Depends(get_db)):
-    team = db.query(models.Team).first()
+@router.post("/{team_id}/add", response_model=schemas.Team)
+def add_pokemon(team_id: int, pokemon: schemas.PokemonCreate, db: Session = Depends(get_db)):
+    team = db.query(models.Team).filter(models.Team.id == team_id).first()
     if not team:
-        team = models.Team()
-        db.add(team)
-        db.commit()
-        db.refresh(team)
-
+        raise HTTPException(status_code=404, detail="Team not found.")
     if len(team.pokemons) >= 6:
         raise HTTPException(status_code=400, detail="This team already has 6 Pokemons.")
 

@@ -1,61 +1,56 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "../services/api";
 
 export default function PokemonDetail({ name, onClose }) {
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [teams, setTeams] = useState([]);
 
   useEffect(() => {
     async function fetchData() {
-      try {
-        const res = await api.get(`/pokemon/${name}`);
-        setData(res.data);
-      } catch {
-        alert("Error! Failed to load Pokemon's details");
-      } finally {
-        setLoading(false);
-      }
+      const [pRes, tRes] = await Promise.all([
+        api.get(`/pokemon/${name}`),
+        api.get(`/pokemon/${name}/teams`)
+      ]);
+      setData(pRes.data);
+      setTeams(tRes.data.available_teams);
     }
     fetchData();
   }, [name]);
 
-  if (loading) {
-    return (
-      <div className="fixed inset-0 bg-black/60 flex items-center justify-center text-white">
-        Loading {name}...
-      </div>
-    );
+  async function addToTeam(teamId) {
+    await api.post(`/team/${teamId}/add`, {
+      name: data.name,
+      image: data.image,
+    });
+    alert(`${data.name} added to the team!`);
+    onClose();
   }
 
   if (!data) return null;
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
-      <div className="bg-white p-6 rounded-lg w-96 relative shadow-xl">
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-red-500 font-bold text-lg"
-        >
-          ✕
-        </button>
+      <div className="bg-white p-6 rounded-lg w-96">
+        {/* detalhes */}
+        <h2 className="text-2xl font-bold mb-2 capitalize">{data.name}</h2>
 
-        <img src={data.image} alt={data.name} className="mx-auto w-40 h-40" />
-        <h2 className="text-3xl font-bold text-center capitalize">{data.name}</h2>
-
-        <div className="mt-4 space-y-2">
-          <p><strong>Types:</strong> {data.types.join(", ")}</p>
-          <p><strong>Weight:</strong> {data.weight}</p>
-          <p><strong>Height:</strong> {data.height}</p>
-
-          <h3 className="mt-3 font-semibold">Statistics:</h3>
-          <ul className="grid grid-cols-2 gap-x-4">
-            {Object.entries(data.stats).map(([key, value]) => (
-              <li key={key} className="capitalize">
-                {key}: <span className="font-bold">{value}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* equipas */}
+        <h3 className="mt-4 font-semibold">Team Manager</h3>
+        {teams.map((t) => (
+          <div key={t.id} className="flex justify-between mt-1">
+            <span>{t.name}</span>
+            {t.has_space ? (
+              <button
+                onClick={() => addToTeam(t.id)}
+                className="bg-green-500 text-white px-2 rounded"
+              >
+                Add
+              </button>
+            ) : (
+              <span className="text-gray-400 text-sm">Full</span>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
