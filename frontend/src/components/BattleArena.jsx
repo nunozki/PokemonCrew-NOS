@@ -14,7 +14,6 @@ export default function BattleArena({ pokemons, onBattleEnd }) {
   const [pokemon2, setPokemon2] = useState(null);
   const [battleLog, setBattleLog] = useState([]);
   const [isBattleOver, setIsBattleOver] = useState(false);
-  const [winner, setWinner] = useState(null);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -66,7 +65,6 @@ export default function BattleArena({ pokemons, onBattleEnd }) {
     if (newHp === 0) {
       setBattleLog(prev => [...prev, `${defender.name} fainted!`, `${attacker.name} wins!`]);
       setIsBattleOver(true);
-      setWinner(attacker);
       api.post('/battle/', {
         pokemon1_name: pokemons[0].name,
         pokemon2_name: pokemons[1].name,
