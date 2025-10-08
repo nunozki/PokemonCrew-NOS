@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { api } from "../services/api";
 import PokemonCard from "../components/PokemonCard";
+import PokemonTeamManagement from "../components/PokemonTeamManagement";
 import PokemonDetail from "../components/PokemonDetail";
 
 export default function Pokedex() {
@@ -20,7 +21,11 @@ export default function Pokedex() {
     if (!search) return loadPokemons();
     try {
       const res = await api.get(`/pokemon/${search.toLowerCase()}`);
-      setPokemons([{ name: res.data.name, image: res.data.image }]);
+      // The search result has a different structure. We need to map it
+      // to the same structure as the list from `loadPokemons` to ensure
+      // consistency. The `PokemonCard` component expects a `url` property.
+      const pokemon = { name: res.data.name, url: res.data.url, image: res.data.image };
+      setPokemons([pokemon]);
     } catch {
       alert("Pokemon not found!");
     }
