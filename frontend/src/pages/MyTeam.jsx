@@ -1,17 +1,21 @@
 import { useState, useEffect } from "react";
 import { api } from "../services/api";
+import PokemonCard from "../components/PokemonCard";
 
-export default function MyTeams() {
-  const [team, setTeam] = useState(null);
-  const [loading, setLoading] = useState(false);
+export default function MyTeam() {
+  const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [newTeamName, setNewTeamName] = useState("");
+  const [editingTeamId, setEditingTeamId] = useState(null);
+  const [editingTeamName, setEditingTeamName] = useState("");
 
-  useEffect(() => { loadTeam(); }, []);
+  useEffect(() => { loadTeams(); }, []);
 
-  async function loadTeam() {
+  async function loadTeams() {
     try {
       setLoading(true);
-      const res = await api.get("/team/");
-      setTeam(res.data);
+      const res = await api.get("/team/list");
+      setTeams(res.data);
     } catch (err) {
       console.error("Failed to load team:", err);
     } finally {
@@ -19,14 +23,37 @@ export default function MyTeams() {
     }
   }
 
-  async function removePokemon(name) {
+  async function createTeam(e) {
+    e.preventDefault();
+    if (!newTeamName.trim()) return;
+    await api.post("/team/create", { name: newTeamName });
+    setNewTeamName("");
+    await loadTeams();
+  }
+
+  async function handleUpdateTeamName(e, teamId) {
+    e.preventDefault();
+    await api.put(`/team/${teamId}`, { name: editingTeamName });
+    setEditingTeamId(null);
+    await loadTeams();
+  }
+
+  async function handleDeleteTeam(teamId) {
+    if (!confirm(`Are you sure you want to delete this team? This action cannot be undone.`)) {
+      return;
+    }
+    await api.delete(`/team/${teamId}`);
+    await loadTeams();
+  }
+
+  async function removePokemon(teamId, name) {
     if (!confirm(`Remove ${name} from your team?`)) {
       return;
     }
     try {
       setLoading(true);
-      await api.delete(`/team/remove/${name}`);
-      await loadTeam();
+      await api.delete(`/team/${teamId}/remove/${name}`);
+      await loadTeams();
     } catch (err) {
       console.error("Failed to remove pokemon:", err);
     } finally {
@@ -34,51 +61,76 @@ export default function MyTeams() {
     }
   }
 
-  // Note: backend exposes POST /team/{team_id}/add to add a pokemon. UI for adding
-  // is intentionally simple: users add from Pokedex (star on card). Here we show
-  // available actions and the concrete endpoints used by the codebase.
-
   return (
     <div className="p-4">
-      <h1 className="text-3xl font-bold mb-4">My Team</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center">My Teams</h1>
+
+      <form onSubmit={createTeam} className="mb-8 flex gap-2">
+        <input
+          type="text"
+          value={newTeamName}
+          onChange={(e) => setNewTeamName(e.target.value)}
+          placeholder="New team name"
+          className="border p-2 rounded-l w-full sm:w-60"
+        />
+        <button type="submit" className="bg-blue-500 text-white px-4 rounded-r">Create Team</button>
+      </form>
 
       {loading && <div>Loading...</div>}
 
-      {!team && !loading && (
-        <div className="text-sm text-gray-500">No team found. Open the Pokedex to create or add Pokemons.</div>
+      {!teams.length && !loading && (
+        <div className="text-sm text-gray-500">No teams found. Create one to get started!</div>
       )}
 
-      {team && (
-        <div className="space-y-4">
-          <div className="border p-2 rounded bg-gray-50">
-            <div className="text-sm text-gray-600">Team id: <strong>{team.id}</strong></div>
-            <div className="text-sm text-gray-600">Name: <strong>{team.name || 'My Team'}</strong></div>
-            <div className="text-sm text-gray-600">Actions available: <em>View</em>, <em>Add (from Pokedex)</em>, <em>Remove</em></div>
-            <div className="text-xs text-gray-500 mt-1">Endpoints: GET /api/team/, POST /api/team/{"team_id"}/add, DELETE /api/team/remove/{"name"}</div>
+      {teams.map((team) => (
+        <div key={team.id} className="space-y-4 mb-8 p-4 border rounded-lg shadow-md bg-gray-50">
+          <div className="flex justify-between items-center flex-wrap gap-2">
+            {editingTeamId === team.id ? (
+              <form onSubmit={(e) => handleUpdateTeamName(e, team.id)} className="flex-grow flex gap-2">
+                <input
+                  type="text"
+                  value={editingTeamName}
+                  onChange={(e) => setEditingTeamName(e.target.value)}
+                  className="border p-2 rounded-l w-full"
+                  autoFocus
+                />
+                <button type="submit" className="bg-green-500 text-white px-4 rounded-r">Save</button>
+              </form>
+            ) : (
+              <h2 className="text-xl font-bold text-gray-800">{team.name || 'My Favorite Team'}</h2>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setEditingTeamId(team.id); setEditingTeamName(team.name || ""); }}
+                className="bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600 transition-colors"
+              >
+                Rename
+              </button>
+              <button
+                onClick={() => handleDeleteTeam(team.id)}
+                className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 transition-colors"
+              >
+                Delete Team
+              </button>
+            </div>
           </div>
 
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {team.pokemons.length === 0 && (
-              <li className="text-gray-500">No Pokemons in the team yet. Use the Pokedex to add some.</li>
+              <li className="text-gray-500 col-span-full text-center py-4">This team is empty. Go to the Pokédex to add some Pokémon!</li>
             )}
 
             {team.pokemons.map((p) => (
-              <li key={p.id} className="border p-2 rounded flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <img src={p.image} alt={p.name} className="w-12 h-12" />
-                  <div>
-                    <div className="font-semibold capitalize">{p.name}</div>
-                    <div className="text-sm text-gray-500">id: {p.id}</div>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => removePokemon(p.name)} className="bg-red-500 text-white px-3 py-1 rounded">Remove</button>
-                </div>
-              </li>
+              <PokemonCard
+                key={p.id}
+                pokemon={p}
+                onRemove={() => removePokemon(team.id, p.name)}
+                showFavoriteButton={false}
+              />
             ))}
           </ul>
         </div>
-      )}
+      ))}
     </div>
   );
 }

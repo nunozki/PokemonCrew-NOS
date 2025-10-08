@@ -1,6 +1,9 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
+class TeamCreate(BaseModel):
+    name: str
+    
 class PokemonBase(BaseModel):
     name: str
     image: str

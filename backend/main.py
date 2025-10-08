@@ -8,18 +8,24 @@ models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="MyPokemonCrew API")
 
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173"
+]
+
+
 POKEAPI_URL = "https://pokeapi.co/api/v2"
+
+app.include_router(team.router, prefix="/api/team", tags=["Team"])
 
 # Allow frontend to access backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Frontend's origin
+    allow_origins=origins,  # Frontend's origin
     allow_credentials=True,
     allow_methods=["*"],  # GET, POST, etc.
     allow_headers=["*"],
 )
-
-app.include_router(team.router, prefix="/api/team", tags=["Team"])
 
 @app.get("/api/pokemon/")
 async def list_pokemons(limit: int = 20, offset: int = 0):

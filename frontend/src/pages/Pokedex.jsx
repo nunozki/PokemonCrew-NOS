@@ -1,19 +1,38 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { api } from "../services/api";
 import PokemonCard from "../components/PokemonCard";
-import PokemonTeamManagement from "../components/PokemonTeamManagement";
 import PokemonDetail from "../components/PokemonDetail";
 
 export default function Pokedex() {
   const [pokemons, setPokemons] = useState([]);
   const [search, setSearch] = useState("");
+  const [teams, setTeams] = useState([]);
   const [selected, setSelected] = useState(null);
 
-  useEffect(() => { loadPokemons(); }, []);
+  const sortedPokemons = useMemo(() => {
+    if (!teams.length) return pokemons;
+    const favoriteNames = new Set(teams.flatMap(t => t.pokemons).map(p => p.name.toLowerCase()));
+    return [...pokemons].sort((a, b) => {
+        const aIsFavorite = favoriteNames.has(a.name.toLowerCase());
+        const bIsFavorite = favoriteNames.has(b.name.toLowerCase());
+        if (aIsFavorite === bIsFavorite) return 0;
+        return aIsFavorite ? -1 : 1;
+    });
+  }, [pokemons, teams]);
+
+  useEffect(() => {
+    loadPokemons();
+    loadTeams();
+  }, []);
 
   async function loadPokemons() {
     const res = await api.get("/pokemon?limit=50");
     setPokemons(res.data.results);
+  }
+
+  async function loadTeams() {
+    const res = await api.get("/team/list");
+    setTeams(res.data);
   }
 
   async function handleSearch(e) {
@@ -22,9 +41,9 @@ export default function Pokedex() {
     try {
       const res = await api.get(`/pokemon/${search.toLowerCase()}`);
       // The search result has a different structure. We need to map it
-      // to the same structure as the list from `loadPokemons` to ensure
-      // consistency. The `PokemonCard` component expects a `url` property.
-      const pokemon = { name: res.data.name, url: res.data.url, image: res.data.image };
+      // to the same structure as the list from `loadPokemons`.
+      // The key is to provide the `image` property directly.
+      const pokemon = { name: res.data.name, image: res.data.image };
       setPokemons([pokemon]);
     } catch {
       alert("Pokemon not found!");
@@ -47,14 +66,16 @@ export default function Pokedex() {
       </form>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {pokemons.map((p) => (
-          <PokemonCard key={p.name} pokemon={p} onClick={() => setSelected(p.name)} />
+        {sortedPokemons.map((p) => (
+          <PokemonCard key={p.name} pokemon={p} teams={teams} onUpdate={loadTeams} onClick={() => setSelected(p.name)} />
         ))}
       </div>
 
       {selected && (
         <PokemonDetail
           name={selected}
+          teams={teams}
+          onUpdate={loadTeams}
           onClose={() => setSelected(null)}
         />
       )}

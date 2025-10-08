@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.orm import defer
 from backend import models, schemas, database
 
 router = APIRouter()
@@ -13,13 +14,51 @@ def get_db():
 
 @router.get("/", response_model=schemas.Team)
 def get_team(db: Session = Depends(get_db)):
-    team = db.query(models.Team).first()
+    # The user_id column might not exist if the database is old.
+    # We defer loading it to avoid an error, as it's not used here anyway.
+    team = db.query(models.Team).options(defer(models.Team.user_id)).first()
     if not team:
         team = models.Team()
         db.add(team)
         db.commit()
         db.refresh(team)
     return team
+
+@router.get("/list", response_model=list[schemas.Team])
+def list_teams(db: Session = Depends(get_db)):
+    """List all teams."""
+    return db.query(models.Team).all()
+
+@router.post("/create", response_model=schemas.Team)
+def create_team(team_data: schemas.TeamCreate, db: Session = Depends(get_db)):
+    """Create a new team."""
+    new_team = models.Team(name=team_data.name)
+    db.add(new_team)
+    db.commit()
+    db.refresh(new_team)
+    return new_team
+
+@router.put("/{team_id}", response_model=schemas.Team)
+def update_team(team_id: int, team_data: schemas.TeamCreate, db: Session = Depends(get_db)):
+    """Update a team's name."""
+    team = db.query(models.Team).filter(models.Team.id == team_id).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found.")
+    team.name = team_data.name
+    db.commit()
+    db.refresh(team)
+    return team
+
+@router.delete("/{team_id}", status_code=204)
+def delete_team(team_id: int, db: Session = Depends(get_db)):
+    """Delete a team."""
+    team = db.query(models.Team).filter(models.Team.id == team_id).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found.")
+    
+    team.pokemons.clear()
+    db.delete(team)
+    db.commit()
 
 @router.post("/{team_id}/add", response_model=schemas.Team)
 def add_pokemon(team_id: int, pokemon: schemas.PokemonCreate, db: Session = Depends(get_db)):
@@ -29,25 +68,40 @@ def add_pokemon(team_id: int, pokemon: schemas.PokemonCreate, db: Session = Depe
     if len(team.pokemons) >= 6:
         raise HTTPException(status_code=400, detail="This team already has 6 Pokemons.")
 
-    existing = db.query(models.Pokemon).filter_by(name=pokemon.name).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="This Pokemon already has a team.")
+    # Check if this specific pokemon is already in this specific team
+    for p in team.pokemons:
+        if p.name == pokemon.name:
+            raise HTTPException(status_code=400, detail="This Pokemon is already in this team.")
 
-    new_pokemon = models.Pokemon(name=pokemon.name, image=pokemon.image, team_id=team.id)
-    db.add(new_pokemon)
+    # Find pokemon or create it if it doesn't exist in the pokemons table
+    db_pokemon = db.query(models.Pokemon).filter_by(name=pokemon.name).first()
+    if not db_pokemon:
+        db_pokemon = models.Pokemon(name=pokemon.name, image=pokemon.image)
+        db.add(db_pokemon)
+        db.commit()
+        db.refresh(db_pokemon)
+
+    team.pokemons.append(db_pokemon)
     db.commit()
     db.refresh(team)
     return team
 
-@router.delete("/remove/{name}", response_model=schemas.Team)
-def remove_pokemon(name: str, db: Session = Depends(get_db)):
-    team = db.query(models.Team).first()
+@router.delete("/{team_id}/remove/{name}", response_model=schemas.Team)
+def remove_pokemon(team_id: int, name: str, db: Session = Depends(get_db)):
+    team = db.query(models.Team).filter(models.Team.id == team_id).first()
     if not team:
         raise HTTPException(status_code=404, detail="Team not found.")
 
-    pokemon = db.query(models.Pokemon).filter_by(name=name).first()
-    if pokemon:
-        db.delete(pokemon)
+    pokemon_to_remove = None
+    for p in team.pokemons:
+        if p.name == name:
+            pokemon_to_remove = p
+            break
+    
+    if pokemon_to_remove:
+        team.pokemons.remove(pokemon_to_remove)
         db.commit()
-    db.refresh(team)
-    return team
+        db.refresh(team)
+        return team
+
+    raise HTTPException(status_code=404, detail="Pokemon not found in this team.")
