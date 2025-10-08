@@ -4,6 +4,23 @@ from typing import List, Optional
 class TeamCreate(BaseModel):
     name: str
     
+class UserBase(BaseModel):
+    username: str
+    email: Optional[str] = None
+
+class UserCreate(UserBase):
+    password: str
+
+class User(UserBase):
+    id: int
+    model_config = {"from_attributes": True}
+    
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    name: str
 class PokemonBase(BaseModel):
     name: str
     image: str
