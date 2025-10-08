@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Table
+from sqlalchemy import Column, Integer, String, ForeignKey, Table, DateTime
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 from backend.database import Base
 
 team_pokemon_association = Table('team_pokemon_association', Base.metadata,
@@ -27,3 +28,12 @@ class Pokemon(Base):
     name = Column(String, unique=True, index=True)
     image = Column(String)
     teams = relationship("Team", secondary=team_pokemon_association, back_populates="pokemons")
+
+class BattleLog(Base):
+    __tablename__ = "battle_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    pokemon1_name = Column(String)
+    pokemon2_name = Column(String)
+    winner_name = Column(String)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)

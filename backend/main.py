@@ -1,7 +1,7 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException
-from backend import models, schemas, database
-from backend.routes import team
+from backend import models, database
+from backend.routes import team, battle
 import httpx
 
 models.Base.metadata.create_all(bind=database.engine)
@@ -17,6 +17,7 @@ origins = [
 POKEAPI_URL = "https://pokeapi.co/api/v2"
 
 app.include_router(team.router, prefix="/api/team", tags=["Team"])
+app.include_router(battle.router, prefix="/api/battle", tags=["Battle"])
 
 # Allow frontend to access backend
 app.add_middleware(

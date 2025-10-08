@@ -26,3 +26,16 @@ class Team(TeamBase):
     model_config = {
         "from_attributes": True  
     }
+
+class BattleLogBase(BaseModel):
+    pokemon1_name: str
+    pokemon2_name: str
+    winner_name: str
+
+class BattleLogCreate(BattleLogBase):
+    pass
+
+class BattleLog(BattleLogBase):
+    id: int
+    timestamp: str
+    model_config = {"from_attributes": True}

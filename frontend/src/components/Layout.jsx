@@ -18,6 +18,8 @@ export default function Layout() {
             <div className="flex items-baseline space-x-4">
               <NavLink to="/" className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : inactiveLinkClasses}`}>Pokédex</NavLink>
               <NavLink to="/my-team" className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : inactiveLinkClasses}`}>My Team</NavLink>
+              <NavLink to="/battle" className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : inactiveLinkClasses}`}>Battle</NavLink>
+              <NavLink to="/battle-history" className={({ isActive }) => `${linkClasses} ${isActive ? activeLinkClasses : inactiveLinkClasses}`}>History</NavLink>
             </div>
           </div>
         </div>
