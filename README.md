@@ -11,18 +11,23 @@
 ## Installation and Usage
 
 # Backend
-cd backend
-venv\Scripts\activate
-pip install -r requirements.txt (!!! One time only !!!)
-cd ..
-uvicorn backend.main:app --reload --port 9000 
-http://localhost:9000/docs
+- cd backend
+- python -m venv venv (!!! One time only !!!)
+- #Windows
+- venv\Scripts\activate
+- #macOS / Linux
+- source venv/bin/activate
+- pip install -r requirements.txt (!!! One time only !!!)
+- cd ..
+- uvicorn backend.main:app --reload --port 9000 
+- http://localhost:9000/docs
 
 
 # Frontend
-cd frontend
-npm run dev
-http://localhost:5173/
+- cd frontend
+- npm install (!!! One time only !!!)
+- npm run dev
+- http://localhost:5173/
 
 
 
