@@ -13,7 +13,10 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True, nullable=True)
+    hashed_password = Column(String, nullable=False)
+    role = Column(String, default='normal', nullable=False) # 'normal' or 'admin'
     teams = relationship("Team", back_populates="user")
+    battle_logs = relationship("BattleLog", back_populates="user")
 
 class Team(Base):
     __tablename__ = "teams"
@@ -36,5 +39,9 @@ class BattleLog(Base):
     pokemon1_name = Column(String)
     pokemon2_name = Column(String)
     winner_name = Column(String)
+    log = Column(String) # JSON string of battle events
+    pokemon1_stats = Column(String) # JSON string of pokemon 1 stats
+    pokemon2_stats = Column(String) # JSON string of pokemon 2 stats
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    user = relationship("User", back_populates="battle_logs")

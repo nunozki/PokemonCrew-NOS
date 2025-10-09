@@ -11,22 +11,21 @@ export function AuthProvider({ children }) {
     params.append('username', username);
     params.append('password', password);
 
-    const response = await api.post("/users/login", params, {
+    await api.post("/users/login", params, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
     
-    localStorage.setItem("pokemon-crew-token", response.data.access_token);
     await fetchUser();
   };
 
-  const logout = () => {
-    localStorage.removeItem("pokemon-crew-token");
+  const logout = async () => {
+    //Ideally, there would be a /logout endpoint on the backend to invalidate the cookie
     setCurrentUser(null);
+    //Force a reload to ensure state is cleared across the entire app    window.location.href = '/login';
   };
 
   const fetchUser = async () => {
-    const token = localStorage.getItem("pokemon-crew-token");
-    if (token) {
+    try {
       try {
         const res = await api.get("/users/me");
         setCurrentUser(res.data);
@@ -34,8 +33,9 @@ export function AuthProvider({ children }) {
         console.error("Failed to fetch user, logging out.", error);
         logout();
       }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {

@@ -5,18 +5,15 @@ from backend import models, schemas, database, auth
 
 router = APIRouter()
 
-@router.get("/", response_model=schemas.Team)
+@router.get("/", response_model=list[schemas.Team])
 def get_team(db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
     # The user_id column might not exist if the database is old.
     # We defer loading it to avoid an error, as it's not used here anyway.
-    team = db.query(models.Team).filter(models.Team.user_id == current_user.id).first()
+    team = db.query(models.Team).filter(models.Team.user_id == current_user.id).all()
     if not team:
-        # For simplicity, we'll use a single user and team.
-        # In a real app, you'd get the current user.
-        team = models.Team(name=f"{current_user.username}'s Team", user_id=current_user.id)
-        db.add(team)
-        db.commit()
-        db.refresh(team)
+        # If no teams, return an empty list. The frontend can handle this.
+        # The logic to create a default team can be moved to the frontend or a dedicated endpoint if needed.
+        return []
     return team
 
 @router.get("/list", response_model=list[schemas.Team])

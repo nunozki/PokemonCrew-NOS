@@ -1,5 +1,8 @@
-from pydantic import BaseModel
-from typing import List, Optional
+from pydantic import BaseModel, field_validator
+from typing import List, Optional, Any
+from datetime import datetime
+import json
+
 
 class TeamCreate(BaseModel):
     name: str
@@ -13,6 +16,7 @@ class UserCreate(UserBase):
 
 class User(UserBase):
     id: int
+    role: str
     model_config = {"from_attributes": True}
     
 class Token(BaseModel):
@@ -48,11 +52,43 @@ class BattleLogBase(BaseModel):
     pokemon1_name: str
     pokemon2_name: str
     winner_name: str
+    log: list[str]
 
 class BattleLogCreate(BattleLogBase):
     pass
 
 class BattleLog(BattleLogBase):
     id: int
-    timestamp: str
+    timestamp: datetime
     model_config = {"from_attributes": True}
+
+    @field_validator('log', mode='before')
+    @classmethod
+    def parse_log(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
+
+class BattleLogDetails(BattleLog):
+    pokemon1_stats: dict[str, Any]
+    pokemon2_stats: dict[str, Any]
+
+    @field_validator('pokemon1_stats', 'pokemon2_stats', mode='before')
+    @classmethod
+    def parse_stats(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                # Handle case where it might not be a valid JSON string
+                # Or if it's already a dict from a previous validation step
+                return {}
+        return v
+
+class BattleResponse(BaseModel):
+    id: int
+    winner: str
+    log: list[str]
+    p1_stats: dict
+    p2_stats: dict
+    timestamp: datetime

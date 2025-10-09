@@ -1,6 +1,6 @@
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, HTTPException
-from backend import models, database
+from fastapi import FastAPI, HTTPException, Depends
+from backend import models, database, auth
 from backend.routes import team, battle, user
 import httpx
 
@@ -16,7 +16,7 @@ origins = [
 
 POKEAPI_URL = "https://pokeapi.co/api/v2"
 
-app.include_router(team.router, prefix="/api/team", tags=["Team"])
+app.include_router(team.router, prefix="/api/team", tags=["Team"], dependencies=[Depends(auth.require_admin)])
 app.include_router(battle.router, prefix="/api/battle", tags=["Battle"])
 app.include_router(user.router, prefix="/api/users", tags=["Users"])
 
