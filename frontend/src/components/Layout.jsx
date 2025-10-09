@@ -1,5 +1,5 @@
 import { NavLink, Outlet, Link } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth.js";
+import { useAuth } from "../contexts/useAuth.js";
 
 export default function Layout() {
   const linkClasses = "px-3 py-2 rounded-md text-sm font-medium transition-colors";
